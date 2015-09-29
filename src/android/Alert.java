@@ -1,44 +1,44 @@
-package com.karinaplugin.alert.Alert; 
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
-import android.content.DialogInterface;
+package com.karinanishimura.myplugin;
+
 import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CordovaWebView;
-import org.apache.cordova.PluginResult;
+import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
+import android.app.Activity;
+import android.content.Intent;
 
-public class Alert extends CordovaPlugin {
-  protected void pluginInitialize() {
-  }
+public class Calendar extends CordovaPlugin {
 
-  public boolean execute(String action, JSONArray args, CallbackContext callbackContext)
-      throws JSONException {
-    if (action.equals("alert")) {
-      alert(args.getString(0), args.getString(1), args.getString(2), callbackContext);
-      return true;
+    public static final String ACTION_ADD_CALENDAR_ENTRY = "addCalendarEntry";
+    
+    @Override
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        try {
+            if (ACTION_ADD_CALENDAR_ENTRY.equals(action)) {
+                JSONObject arg_object = args.getJSONObject(0);
+                Intent calIntent = new Intent(Intent.ACTION_EDIT)
+                .setType("vnd.android.cursor.item/event")
+                .putExtra("beginTime", arg_object.getLong("startTimeMillis"))
+                .putExtra("endTime", arg_object.getLong("endTimeMillis"))
+                .putExtra("title", arg_object.getString("title"))
+                .putExtra("description", arg_object.getString("description"))
+                .putExtra("eventLocation", arg_object.getString("eventLocation"));
+                
+                this.cordova.getActivity().startActivity(calIntent);
+                callbackContext.success();
+                return true;
+            }
+            callbackContext.error("Invalid action");
+            return false;
+        } catch(Exception e) {
+            System.err.println("Exception: " + e.getMessage());
+            callbackContext.error(e.getMessage());
+            return false;
+        } 
+
     }
-    return false;
-  }
+    
 
-  private synchronized void alert(final String title,
-                                  final String message,
-                                  final String buttonLabel,
-                                  final CallbackContext callbackContext) {
-    new AlertDialog.Builder(cordova.getActivity())
-    .setTitle(title)
-    .setMessage(message)
-    .setCancelable(false)
-    .setNeutralButton(buttonLabel, new AlertDialog.OnClickListener() {
-      public void onClick(DialogInterface dialogInterface, int which) {
-        dialogInterface.dismiss();
-        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, 0));
-      }
-    })
-    .create()
-    .show();
-  }
+
 }
